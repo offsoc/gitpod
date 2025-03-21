@@ -117,7 +117,7 @@ while IFS= read -r image || [ -n "$image" ]; do
         if echo "$trivy_output" | jq empty > /dev/null 2>&1; then
             # Direct approach - create the combined JSON object using jq directly
             jq -c --arg image "$image" --arg scan_time "$scan_time" \
-               '. + {image: $image, scan_time: $scan_time}' <<< "$trivy_output" >> "$OUTPUT_FILE"
+               '. + {image: $image, scan_time: $scan_time}' <<< "$trivy_output" | jq >> "$OUTPUT_FILE"
         else
             # If trivy output is not valid JSON, treat as error
             echo "Warning: Trivy returned invalid JSON for $image"
@@ -125,7 +125,7 @@ while IFS= read -r image || [ -n "$image" ]; do
                   --arg scan_time "$scan_time" \
                   --arg error "Invalid JSON output from Trivy" \
                   --arg details "$trivy_output" \
-                  '{image: $image, scan_time: $scan_time, error: $error, error_details: $details}' >> "$OUTPUT_FILE"
+                  '{image: $image, scan_time: $scan_time, error: $error, error_details: $details}' | jq >> "$OUTPUT_FILE"
         fi
     else
         # For error cases, create a simple JSON object
