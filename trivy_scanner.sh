@@ -8,7 +8,7 @@ if ! command -v trivy &> /dev/null; then
     sudo apt-get update
     sudo apt-get install -y wget apt-transport-https gnupg lsb-release
     wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-    echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+    echo deb https://aquasecurity.github.io/trivy-repo/deb "$(lsb_release -sc)" main | sudo tee -a /etc/apt/sources.list.d/trivy.list
     sudo apt-get update
     sudo apt-get install -y trivy
 
@@ -22,21 +22,33 @@ if ! command -v trivy &> /dev/null; then
     echo "Trivy installed successfully."
 fi
 
+
 # Check if input file is provided
 if [ $# -lt 1 ]; then
     echo "Usage: $0 <input_file> [output_file]"
     echo "  input_file: File containing list of images to scan (one per line)"
-    echo "  output_file: Optional output file (default: trivy_results.txt)"
+    echo "  output_file: Optional output file (default: trivy_results.jsonl)"
     exit 1
 fi
 
 INPUT_FILE="$1"
-OUTPUT_FILE="${2:-trivy_results.txt}"
+OUTPUT_FILE="${2:-trivy_results.jsonl}"
 
 # Check if input file exists
 if [ ! -f "$INPUT_FILE" ]; then
     echo "Error: Input file '$INPUT_FILE' not found"
     exit 1
+fi
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "jq is not installed. Installing..."
+    sudo apt-get update
+    sudo apt-get install -y jq
+    if ! command -v jq &> /dev/null; then
+        echo "Failed to install jq. Cannot continue."
+        exit 1
+    fi
 fi
 
 # Check if AWS CLI is installed for ECR login
@@ -73,8 +85,7 @@ else
 fi
 
 # Create or clear the output file
-echo "Trivy Scan Results - $(date)" > "$OUTPUT_FILE"
-echo "=======================================" >> "$OUTPUT_FILE"
+:> "$OUTPUT_FILE"
 
 # Process each line in the input file
 while IFS= read -r image || [ -n "$image" ]; do
@@ -92,16 +103,40 @@ while IFS= read -r image || [ -n "$image" ]; do
     fi
 
     echo "Scanning image: $image"
-    echo -e "\n\n=======================================" >> "$OUTPUT_FILE"
-    echo "IMAGE: $image" >> "$OUTPUT_FILE"
-    echo "Scan Time: $(date)" >> "$OUTPUT_FILE"
-    echo "=======================================" >> "$OUTPUT_FILE"
 
-    # Run trivy directly and append results to output file
-    trivy image "$image" --severity CRITICAL,HIGH >> "$OUTPUT_FILE" 2>&1
+    # Get the current timestamp
+    scan_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-    # Add separator after each scan
-    echo -e "\nScan completed for: $image\n"
+    # Run trivy with JSON output
+    trivy_output=$(trivy image "$image" --severity CRITICAL,HIGH --scanners vuln --format json | jq -c)
+    scan_status=$?
+
+    # Create a JSON object for the current scan
+    if [ $scan_status -eq 0 ]; then
+        # Check if trivy_output is valid JSON
+        if echo "$trivy_output" | jq empty > /dev/null 2>&1; then
+            # Direct approach - create the combined JSON object using jq directly
+            jq -c --arg image "$image" --arg scan_time "$scan_time" \
+               '. + {image: $image, scan_time: $scan_time}' <<< "$trivy_output" >> "$OUTPUT_FILE"
+        else
+            # If trivy output is not valid JSON, treat as error
+            echo "Warning: Trivy returned invalid JSON for $image"
+            jq -n --arg image "$image" \
+                  --arg scan_time "$scan_time" \
+                  --arg error "Invalid JSON output from Trivy" \
+                  --arg details "$trivy_output" \
+                  '{image: $image, scan_time: $scan_time, error: $error, error_details: $details}' >> "$OUTPUT_FILE"
+        fi
+    else
+        # For error cases, create a simple JSON object
+        jq -n --arg image "$image" \
+              --arg scan_time "$scan_time" \
+              --arg error "Trivy scan failed" \
+              --arg details "$trivy_output" \
+              '{image: $image, scan_time: $scan_time, error: $error, error_details: $details}' >> "$OUTPUT_FILE"
+    fi
+
+    echo "Scan completed for: $image"
 done < "$INPUT_FILE"
 
 echo "All scans completed. Results saved to $OUTPUT_FILE"
