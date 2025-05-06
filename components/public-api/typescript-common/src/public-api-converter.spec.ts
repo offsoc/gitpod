@@ -23,6 +23,8 @@ import {
     InvalidCostCenterError,
     ImageBuildLogsNotYetAvailableError,
     TooManyRunningWorkspacesError,
+    UnauthenticatedDetails,
+    UserDeletedError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import { startFixtureTest } from "./fixtures.spec";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
@@ -375,6 +377,21 @@ describe("PublicAPIConverter", () => {
             const appError = converter.fromError(connectError);
             expect(appError.code).to.equal(ErrorCodes.USER_BLOCKED);
             expect(appError.message).to.equal("user blocked");
+        });
+
+        it("USER_DELETED", () => {
+            const connectError = converter.toError(new ApplicationError(ErrorCodes.USER_DELETED, "user deleted"));
+            expect(connectError.code).to.equal(Code.Unauthenticated);
+            expect(connectError.rawMessage).to.equal("user deleted");
+
+            const details = connectError.findDetails(UnauthenticatedDetails)[0];
+            expect(details).to.not.be.undefined;
+            expect(details?.reason?.case).to.equal("userDeleted");
+            expect(details?.reason?.value).to.be.instanceOf(UserDeletedError);
+
+            const appError = converter.fromError(connectError);
+            expect(appError.code).to.equal(ErrorCodes.USER_DELETED);
+            expect(appError.message).to.equal("user deleted");
         });
 
         it("NEEDS_VERIFICATION", () => {

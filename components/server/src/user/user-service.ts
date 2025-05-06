@@ -88,6 +88,9 @@ export class UserService {
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
+        if (result.markedDeleted) {
+            throw new ApplicationError(ErrorCodes.USER_DELETED, "user deleted");
+        }
         try {
             return await this.relationshipUpdater.migrate(result);
         } catch (error) {

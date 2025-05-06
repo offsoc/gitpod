@@ -557,3 +557,77 @@ export class CellDisabledError extends Message<CellDisabledError> {
     return proto3.util.equals(CellDisabledError, a, b);
   }
 }
+
+/**
+ * @generated from message gitpod.v1.UnauthenticatedDetails
+ */
+export class UnauthenticatedDetails extends Message<UnauthenticatedDetails> {
+  /**
+   * @generated from oneof gitpod.v1.UnauthenticatedDetails.reason
+   */
+  reason: {
+    /**
+     * @generated from field: gitpod.v1.UserDeletedError user_deleted = 1;
+     */
+    value: UserDeletedError;
+    case: "userDeleted";
+  } | { case: undefined; value?: undefined } = { case: undefined };
+
+  constructor(data?: PartialMessage<UnauthenticatedDetails>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UnauthenticatedDetails";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_deleted", kind: "message", T: UserDeletedError, oneof: "reason" },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UnauthenticatedDetails {
+    return new UnauthenticatedDetails().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UnauthenticatedDetails {
+    return new UnauthenticatedDetails().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UnauthenticatedDetails {
+    return new UnauthenticatedDetails().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UnauthenticatedDetails | PlainMessage<UnauthenticatedDetails> | undefined, b: UnauthenticatedDetails | PlainMessage<UnauthenticatedDetails> | undefined): boolean {
+    return proto3.util.equals(UnauthenticatedDetails, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.UserDeletedError
+ */
+export class UserDeletedError extends Message<UserDeletedError> {
+  constructor(data?: PartialMessage<UserDeletedError>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UserDeletedError";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UserDeletedError {
+    return new UserDeletedError().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UserDeletedError {
+    return new UserDeletedError().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UserDeletedError {
+    return new UserDeletedError().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UserDeletedError | PlainMessage<UserDeletedError> | undefined, b: UserDeletedError | PlainMessage<UserDeletedError> | undefined): boolean {
+    return proto3.util.equals(UserDeletedError, a, b);
+  }
+}

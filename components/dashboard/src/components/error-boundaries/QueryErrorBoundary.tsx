@@ -54,6 +54,7 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
                 search: `returnTo=${encodeURIComponent(loginUrl)}`,
             })
             .toString();
+        console.log("redirecting to logout url", logoutUrl);
         window.location.href = logoutUrl;
         return <div></div>;
     }

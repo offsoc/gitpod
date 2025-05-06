@@ -113,7 +113,9 @@ import {
     RepositoryNotFoundError as RepositoryNotFoundErrorData,
     RepositoryUnauthorizedError as RepositoryUnauthorizedErrorData,
     TooManyRunningWorkspacesError,
+    UnauthenticatedDetails,
     UserBlockedError,
+    UserDeletedError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import {
     BlockedEmailDomain,
@@ -787,6 +789,17 @@ export class PublicAPIConverter {
                     reason,
                 );
             }
+            if (reason.code === ErrorCodes.USER_DELETED) {
+                return new ConnectError(reason.message, Code.Unauthenticated, undefined,
+                    [
+                        new UnauthenticatedDetails({
+                            reason: {
+                                case: "userDeleted",
+                                value: new UserDeletedError(),
+                            },
+                        }),
+                    ], reason);
+            }
             return new ConnectError(reason.message, Code.Unknown, undefined, undefined, reason);
         }
         return new ConnectError(`Oops! Something went wrong.`, Code.Internal, undefined, undefined, reason);
@@ -800,6 +813,10 @@ export class PublicAPIConverter {
             return new ApplicationError(ErrorCodes.NOT_FOUND, reason.rawMessage);
         }
         if (reason.code === Code.Unauthenticated) {
+            const details = reason.findDetails(UnauthenticatedDetails)[0];
+            if (details?.reason?.case === "userDeleted") {
+                return new ApplicationError(ErrorCodes.USER_DELETED, reason.rawMessage);
+            }
             return new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, reason.rawMessage);
         }
         if (reason.code === Code.PermissionDenied) {

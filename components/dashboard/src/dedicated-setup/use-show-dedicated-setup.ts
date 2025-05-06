@@ -40,6 +40,7 @@ export const useShowDedicatedSetup = () => {
     if (enableDedicatedOnboardingFlow && showSetup && !inProgress) {
         setInProgress(true);
     }
+    console.info("showSetup", showSetup, "inProgress", inProgress, "forceSetup", forceSetup);
 
     return {
         showSetup: inProgress,

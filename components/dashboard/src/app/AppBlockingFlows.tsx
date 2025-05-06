@@ -23,6 +23,7 @@ export const AppBlockingFlows: FC = ({ children }) => {
     const org = useCurrentOrg();
     const showDedicatedSetup = useShowDedicatedSetup();
     const showUserOnboarding = useShowUserOnboarding();
+    console.info("user", user);
 
     // This shouldn't happen, but if it does don't render anything yet
     if (!user) {
