@@ -2,5 +2,5 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:e1d402d624011d0f4439bfb0d46a3ddc692465103c7234a326e0194953c3cfe0
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:e3ce0a3bb47aefa02647e0bb6cdfb29a5a872e755660be73c9dd7b9578844258
 COPY components--all-docker/versions.yaml components--all-docker/provenance-bundle.jsonl /
